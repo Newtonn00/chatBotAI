@@ -1,19 +1,38 @@
+import time
+
+from openai import OpenAI
 
 
 class OpenAIHandler():
     def __init__(self, openai_client, model):
-        self._model = model
-        self._openai_client = openai_client.get_instance()
+        self._model = openai_client.get_model()
+        self._openai_client: OpenAI = openai_client.get_instance()
+        self._max_tokens = openai_client.get_max_tokens()
 
     def generate_thread_id(self):
-        return None
+        thread = self._openai_client.beta.threads.create()
+        return thread.id
 
-    def make_request(self, messages, thread_id):
-        response = self._openai_client.ChatCompletion.create(
-            model=self._model,
-            messages=messages,
-            max_tokens=150,
-            temperature=0.7,
-            thread_id=thread_id
+    def generate_request(self, user_thread_id, user_content):
+
+        self._openai_client.beta.threads.messages.create(
+            thread_id=user_thread_id,
+            role="user",
+            content=user_content
+
         )
-        return response.choices[0].message['content'].strip()
+
+
+
+        run = self._openai_client.beta.threads.runs.create(
+            thread_id=user_thread_id
+        )
+
+        while run.status != "completed":
+            run = self._openai_client.beta.threads.runs.retrieve(
+                thread_id=user_thread_id,
+                run_id=run.id
+            )
+            time.sleep(1)
+        response = self._openai_client.beta.threads.messages.list(thread_id=user_thread_id)
+        return response.data[0].content[0].text.value
