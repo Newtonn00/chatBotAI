@@ -10,4 +10,4 @@ class SQLiteEngine:
         self._session = sessionmaker(bind=self._engine)
 
     def get_session(self):
-        return self._session
+        return self._session()

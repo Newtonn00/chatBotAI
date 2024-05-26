@@ -7,6 +7,7 @@ class OpenAIClient:
         self._openai_client = OpenAI(api_key=config.openai_api_key)
         self._model = config.openai_model
         self._max_tokens = config.openai_max_tokens
+        self._assist_id = config.openai_assist_id
 
     def get_instance(self):
         return self._openai_client
@@ -16,4 +17,7 @@ class OpenAIClient:
 
     def get_max_tokens(self):
         return self._max_tokens
+
+    def get_assist_id(self):
+        return self._assist_id
 

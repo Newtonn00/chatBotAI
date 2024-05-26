@@ -34,7 +34,14 @@ class SettingsParser:
         else:
             self.openai_max_tokens = os.environ.get('OPENAI_MODEL')
 
+        if (os.environ.get('OPENAI_ASSIST_ID') == '' or os.environ.get(
+                'OPENAI_ASSIST_ID') is None) and _settings_file_exists and config.has_option('openai', 'openai_assist_id'):
+            self.openai_assist_id = config['openai']['openai_assist_id']
+        else:
+            self.openai_assist_id = os.environ.get('OPENAI_ASSIST_ID')
+
         if ((self.openai_api_key == '' or self.openai_api_key is None)
                 or (self.openai_model == '' or self.openai_model is None)
-                or (self.openai_max_tokens == '' or self.openai_max_tokens is None)):
+                or (self.openai_max_tokens == '' or self.openai_max_tokens is None)
+                or (self.openai_assist_id == '' or self.openai_assist_id is None)):
             raise SettingsError()

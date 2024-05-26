@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 class MessageEntity:
     id: int
     user_id: int
-    thread_id: int
+    thread_id: str
     message_timestamp: int
     role: str
     message_text: str

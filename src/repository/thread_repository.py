@@ -10,30 +10,32 @@ class ThreadRepository:
         self._session: Session = db_engine.get_session()
 
     def _map_rep_dataclass(self, rep_data: ThreadModel) -> ThreadEntity:
-        thread_dataclass = ThreadEntity(
-            id=rep_data.id,
-            user_id=rep_data.user_id,
-            thread_id=rep_data.thread_id,
-            content=rep_data.content,
-            created_on_timestamp=rep_data.created_on_timestamp,
-            active=rep_data.active
-        )
+        thread_dataclass = None
+        if rep_data:
+            thread_dataclass = ThreadEntity(
+                id=rep_data.id,
+                user_id=rep_data.user_id,
+                thread_id=rep_data.thread_id,
+                content=rep_data.content,
+                created_on_timestamp=rep_data.created_on_timestamp,
+                active=rep_data.active
+            )
         return thread_dataclass
 
-    def read(self, thread_id: int) -> List[ThreadEntity]:
+    def read(self, user_id: int) -> ThreadEntity:
         curr_session = self._session
 
-        thread_data = curr_session.query(ThreadModel).filter_by(thread_id=thread_id).all()
+        thread_data = curr_session.query(ThreadModel).filter_by(user_id=user_id, active=True).first()
+        thread_dataclass = self._map_rep_dataclass(thread_data)
         curr_session.close()
-        thread_dataclass = [self._map_rep_dataclass(thread) for thread in thread_data]
+
         return thread_dataclass
 
-    def create(self, user_id, thread_id, thread_timestamp, active, content) -> ThreadEntity:
+    def create(self, user_id, thread_id, active, content="No summary provided") -> ThreadEntity:
         curr_session = self._session
-        thread = ThreadModel(thread_id=thread_id, user_id=user_id, created_on_timestamp=thread_timestamp,
-                              active=active,content=content)
+        thread = ThreadModel(thread_id=thread_id, user_id=user_id, active=active, content=content)
         curr_session.add(thread)
         curr_session.commit()
         thread_dataclass = self._map_rep_dataclass(thread)
+        curr_session.close()
         return thread_dataclass
-

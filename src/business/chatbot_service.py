@@ -1,13 +1,14 @@
 from src.entity.user_entity import UserEntity
-from src.entity.message_entity import MessageEntity
+from src.entity.thread_entity import ThreadEntity
 
 
 class ChatBotService:
 
-    def __init__(self, ai_client, user_repo, thread_repo):
-        self._ai_client = ai_client
+    def __init__(self, ai_handler, user_repo, thread_repo, message_repo):
+        self._ai_handler = ai_handler
         self._user_repo = user_repo
         self._thread_repo = thread_repo
+        self._message_repo = message_repo
 
     def _get_user(self, username) -> UserEntity:
         return self._user_repo.read(username)
@@ -15,20 +16,13 @@ class ChatBotService:
     def _create_new_user(self, username) -> UserEntity:
         return self._user_repo.create(username)
 
-    def get_or_create_thread(self, user):
-        thread = session.query(Thread).filter_by(user_id=user.id).first()
-        if not thread:
-            thread_id = self._ai_client.generate_thread_id()
-            thread = Thread(user_id=user.id, thread_id=thread_id)
-            session.add(thread)
-            session.commit()
-        return thread
+    def _get_user_thread(self, user_id) -> ThreadEntity:
+        return self._thread_repo.read(user_id)
 
-    def get_thread_messages(self, thread):
-        messages = session.query(Message).filter_by(thread_id=thread.id).all()
-        return [
-            {"role": "user", "content": msg.content} if i % 2 == 0 else {"role": "assistant", "content": msg.content}
-            for i, msg in enumerate(messages)]
+    def _create_user_thread(self, user_id) -> ThreadEntity:
+        thread_id = self._ai_handler.get_new_user_thread_id()
+        thread_dataclass = self._thread_repo.create(user_id=user_id, thread_id=thread_id, active=True)
+        return thread_dataclass
 
     def _get_user_messages(self, user_id) -> list:
         messages_dataclass = self._thread_repo.read(user_id)
@@ -37,30 +31,22 @@ class ChatBotService:
 
         return messages_history
 
-    def summarize_conversation(self, conversation):
-        response = self._ai_client.make_request(f"Суммаризируй следующую беседу:\n\n{conversation}\n\n", thread_id=0)
-        return response.choices[0].text.strip()
-
     def handle_user_message(self, username, user_message):
-        user_id = self._get_user(username).id
-        if not user_id:
-            user_id = self._create_new_user(username)
+        user_data: UserEntity = self._get_user(username)
+        if user_data:
+            user_id = user_data.id
+        else:
+            user_id = self._create_new_user(username).id
 
-        user_message_history = self._get_user_content(user_id)
+        thread_data: ThreadEntity = self._get_user_thread(user_id)
+        if thread_data:
+            thread_id = thread_data.thread_id
+        else:
+            thread_id = self._create_user_thread(user_id).thread_id
 
-        thread = self.get_or_create_thread(user_id)
-        bot_response = self._ai_client.generate_request(thread_messages, thread.thread_id)
+        bot_response = self._ai_handler.generate_request(thread_id, user_message)
 
-        # Сохранение сообщений в базу данных
-        user_msg = Message(thread_id=thread.id, content=user_message)
-        bot_msg = Message(thread_id=thread.id, content=bot_response)
-        session.add_all([user_msg, bot_msg])
-        session.commit()
-
-        # Обобщение беседы после окончания для сохранения контекста
-        conversation = "\n".join([f"{msg['role']}: {msg['content']}" for msg in thread_messages])
-        summary = self.summarize_conversation(conversation)
-        thread.summary = summary
-        session.commit()
+        self._message_repo.create(thread_id=thread_id, message_text=user_message, role="user", user_id=user_id)
+        self._message_repo.create(thread_id=thread_id, message_text=bot_response, role="bot", user_id=user_id)
 
         return bot_response

@@ -1,16 +1,9 @@
-from flask import Flask, request, jsonify
-import src.business.chatbot_service as chatbot
-
-app = Flask(__name__)
+from src.controller.containers import Containers
+from src.controller.app_manager import AppManager
 
 
-@app.route('/chat', methods=['POST'])
-def chat():
-    user_input = request.json['message']
-    username = request.json['username']
-    bot_response = chatbot.handle_user_message(username, user_input)
-    return jsonify({'response': bot_response})
+container = Containers()
+app_manager = container.app_manager()
+AppManager.set_container_instance(container)
+app_manager.run()
 
-
-if __name__ == '__main__':
-    app.run(port=5060, debug=True)

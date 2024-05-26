@@ -3,8 +3,8 @@ from dataclasses import dataclass, asdict
 
 @dataclass
 class UserEntity:
-    id: str
-    name: str
+    id: int
+    username: str
 
     def as_dict(self) -> dict:
         return asdict(self)
