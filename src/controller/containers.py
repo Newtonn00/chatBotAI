@@ -15,7 +15,7 @@ class Containers(containers.DeclarativeContainer):
     settings_parser = providers.Singleton(SettingsParser)
 
     openai_client = providers.Singleton(OpenAIClient, settings_parser)
-    sqlite_engine = providers.Singleton(SQLiteEngine)
+    sqlite_engine = providers.Singleton(SQLiteEngine, settings_parser)
     user_repo = providers.Factory(UserRepository, sqlite_engine)
     thread_repo = providers.Factory(ThreadRepository, sqlite_engine)
     message_repo = providers.Factory(MessageRepository, sqlite_engine)

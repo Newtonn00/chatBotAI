@@ -40,8 +40,30 @@ class SettingsParser:
         else:
             self.openai_assist_id = os.environ.get('OPENAI_ASSIST_ID')
 
+        if (os.environ.get('APP_LOG_DIRECTORY') == '' or os.environ.get(
+                'APP_LOG_DIRECTORY') is None) and _settings_file_exists and config.has_option('app', 'app_log_directory'):
+            self.app_log_directory = config['app']['app_log_directory']
+        else:
+            self.app_log_directory = os.environ.get('APP_LOG_DIRECTORY')
+
+        if (os.environ.get('APP_DB_DIRECTORY') == '' or os.environ.get(
+                'APP_DB_DIRECTORY') is None) and _settings_file_exists and config.has_option('app', 'app_db_directory'):
+            self.app_db_directory = config['app']['app_db_directory']
+        else:
+            self.app_db_directory = os.environ.get('APP_DB_DIRECTORY')
+
+        if (os.environ.get('APP_PORT') == '' or os.environ.get(
+                'APP_PORT') is None) and _settings_file_exists and config.has_option('app', 'app_port'):
+            self.app_port = config['app']['app_port']
+        else:
+            self.app_port = os.environ.get('APP_PORT')
+
         if ((self.openai_api_key == '' or self.openai_api_key is None)
                 or (self.openai_model == '' or self.openai_model is None)
                 or (self.openai_max_tokens == '' or self.openai_max_tokens is None)
-                or (self.openai_assist_id == '' or self.openai_assist_id is None)):
+                or (self.openai_assist_id == '' or self.openai_assist_id is None)
+                or (self.app_db_directory == '' or self.app_db_directory is None)
+                or (self.app_log_directory == '' or self.app_log_directory is None)
+                or (self.app_port == '' or self.app_port is None)
+            ):
             raise SettingsError()

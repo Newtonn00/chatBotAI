@@ -12,7 +12,7 @@ class ThreadModel(Base):
     content = Column(String)
     active = Column(Boolean)
 
-    def __init__(self, user_id: int, thread_id: int, active: bool,
+    def __init__(self, user_id: int, thread_id: str, active: bool,
                  content="No summary provided"):
         self.thread_id = thread_id
         self.user_id = user_id
